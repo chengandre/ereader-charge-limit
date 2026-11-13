@@ -10,6 +10,7 @@
     // The status last shown under it.
     var shown = "";
     var polling = false;
+    var refreshId = 0;
 
     function el(id) { return document.getElementById(id); }
 
@@ -71,11 +72,23 @@
 
     // Only Install and Charge diagnostics work before installing.
     function enable(installed) {
-        var buttons = document.querySelectorAll("button[data-action]");
+        var buttons = document.querySelectorAll("button[data-action]:not([aria-pressed])");
         for (var i = 0; i < buttons.length; i++) {
             buttons[i].disabled = !installed && buttons[i].getAttribute("data-action") !== "diagnose";
         }
         el("uninstall").disabled = !installed;
+    }
+
+    function showSettings(labels) {
+        var available = !!labels.enabled_value;
+        var limit = "limit-" + (labels.enabled_value === "0" ? "off" : labels.limit_value);
+        var restart = labels.start_value === "1" ? "start-on" : "start-off";
+        var buttons = document.querySelectorAll("button[aria-pressed]");
+        for (var i = 0; i < buttons.length; i++) {
+            var action = buttons[i].getAttribute("data-action");
+            buttons[i].disabled = !available;
+            buttons[i].setAttribute("aria-pressed", String(available && (action === limit || action === restart)));
+        }
     }
 
     // While the guided report runs (Charge diagnostics on an unsupported
@@ -95,7 +108,9 @@
     }
 
     function refresh() {
+        var id = ++refreshId;
         call("state", function (text, err) {
+            if (id !== refreshId) return;
             var install = el("install");
             if (err) {
                 showInfo(problem(err));
@@ -110,6 +125,7 @@
             enable(installed);
             setText(el("version"), "Charge Limit " + state.version);
             if (!installed) {
+                showSettings({});
                 showInfo(supported ?
                     "This Kindle is supported, and Charge Limit isn't installed yet.\n" +
                     "Install adds the charge limiter, which then starts by itself with the Kindle." :
@@ -120,15 +136,13 @@
             }
             var note = current ? "" : "Tap Install to update Charge Limit or repair its start at boot.\n\n";
             call("status", function (text, err) {
-                showInfo(note + (err ? problem(err) : text));
+                if (id === refreshId) showInfo(note + (err ? problem(err) : text));
             });
             call("labels", function (text, err) {
-                if (err) return;
+                if (id !== refreshId || err) return;
                 var labels = parse(text);
-                for (var key in labels) {
-                    var button = document.querySelector('button[data-action="' + key + '"]');
-                    if (button) setText(button, labels[key]);
-                }
+                showSettings(labels);
+                if (labels.full) setText(document.querySelector('button[data-action="full"]'), labels.full);
             });
         });
     }
@@ -136,6 +150,7 @@
     function run(action, waiting) {
         if (busy) return;
         busy = true;
+        refreshId++;
         message = "";
         showInfo(waiting || "...");
         call(action, function (text, err) {

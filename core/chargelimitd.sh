@@ -212,7 +212,8 @@ while :; do
 
 	shown="$plugged $charging_enabled $cap"
 	if [ "$shown" != "$last_shown" ]; then
-		[ -n "$last_shown" ] && notify_ui
+		# The app may already be open when the daemon applies START at boot.
+		notify_ui
 		last_shown=$shown
 	fi
 
