@@ -43,6 +43,7 @@ This tool has been tested on Kobo and Kindle devices:
 | E-reader | Power chip | Driver | Status |
 |---|---|---|---|
 | Kobo Sage | ROHM BD71828 | `bd71827-power` | Tested (firmware 4.38) |
+| Kobo Libra Colour | ROHM BD71828 | `bd71827-power` | Tested (firmware 4.46) |
 | Kindle Paperwhite 11th gen | ROHM BD71828 | `bd71827-power` | Tested (firmware 5.19.2, jailbroken) |
 | Kindle Paperwhite 7th gen | Maxim MAX77696 | `max77696-charger` | Tested (firmware 5.14.2, jailbroken) |
 | Kindle Scribe | ROHM BD71828 + TI BQ25611D charger | `bq256xx-charger` | Tested (firmware 5.19.5, jailbroken) |
